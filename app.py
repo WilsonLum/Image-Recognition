@@ -40,19 +40,20 @@ def my_preprocess(x):
 
 # You can use pretrained model from Keras
 # Check https://keras.io/applications/
-from keras.applications.mobilenet_v2 import MobileNetV2
-model = MobileNetV2(weights='imagenet')
+#from keras.applications.mobilenet_v2 import MobileNetV2
+#model = MobileNetV2(weights='imagenet')
 
-print('Model loaded. Check http://127.0.0.1:5000/')
+#print('Model loaded. Check http://127.0.0.1:5000/')
 
 
 # Model saved with Keras model.save()
-#MODEL_PATH = 'models/CA2_16_224.hdf5'
+MODEL_PATH = 'models/CA2_90_224.hdf5'
+myclasses = ['bees','butterfly','moth']
 
 # Load your own trained model
-#model = load_model(MODEL_PATH)
+model = load_model(MODEL_PATH, compile = False)
 #model._make_predict_function()          # Necessary
-#print('Model loaded. Start serving...')
+print('Model loaded. Start serving...')
 
 
 def model_predict(img, model):
@@ -61,13 +62,15 @@ def model_predict(img, model):
     # Preprocessing the image
     x = image.img_to_array(img)
     # x = np.true_divide(x, 255)
-    x = np.expand_dims(x, axis=0)
+    # x = np.expand_dims(x, axis=0)
 
     # Be careful how your trained model deals with the input
     # otherwise, it won't make correct prediction!
-    x = preprocess_input(x, mode='tf')
-    #x = my_preprocess(x)
+    #x = preprocess_input(x, mode='tf')
+    x = preprocess_input(x)
 
+    x = x.reshape(1,224,224,3)
+    
     preds = model.predict(x)
     return preds
 
@@ -92,10 +95,11 @@ def predict():
 
         # Process your result for human
         pred_proba = "{:.3f}".format(np.amax(preds))    # Max probability
-        pred_class = decode_predictions(preds, top=1)   # ImageNet Decode
+        #pred_class = decode_predictions(preds, top=1)   # ImageNet Decode
+        top_3 = np.argsort(preds[0])[:-4:-1]
 
-        result = str(pred_class[0][0][1])               # Convert to string
-        result = result.replace('_', ' ').capitalize()
+        result = str(myclasses[top_3[0]])               # Convert to string
+        result = result.capitalize()
         
         # Serialize the result, you can add additional fields
         return jsonify(result=result, probability=pred_proba)
