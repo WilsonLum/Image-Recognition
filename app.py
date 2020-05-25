@@ -23,6 +23,20 @@ from util import base64_to_pil
 # Declare a flask app
 app = Flask(__name__)
 
+def my_preprocess(x):
+    # zero-center by mean pixel per channel
+    x /= 255
+    mean = [0.496, 0.475, 0.343] # obtained from ISY5002_CA2_01_Preprocess getPerChannelMeansAndStd()
+    std = [0.280, 0.258, 0.282]  # obtained from ISY5002_CA2_01_Preprocess getPerChannelMeansAndStd()
+    x[..., 0] -= mean[0]
+    x[..., 1] -= mean[1]
+    x[..., 2] -= mean[2]
+    
+    x[..., 0] /= std[0]
+    x[..., 1] /= std[1]
+    x[..., 2] /= std[2]
+
+    return x
 
 # You can use pretrained model from Keras
 # Check https://keras.io/applications/
@@ -33,12 +47,12 @@ print('Model loaded. Check http://127.0.0.1:5000/')
 
 
 # Model saved with Keras model.save()
-MODEL_PATH = 'models/CA2_16_224.hdf5'
+#MODEL_PATH = 'models/CA2_16_224.hdf5'
 
 # Load your own trained model
-# model = load_model(MODEL_PATH)
-# model._make_predict_function()          # Necessary
-# print('Model loaded. Start serving...')
+#model = load_model(MODEL_PATH)
+#model._make_predict_function()          # Necessary
+#print('Model loaded. Start serving...')
 
 
 def model_predict(img, model):
@@ -52,6 +66,7 @@ def model_predict(img, model):
     # Be careful how your trained model deals with the input
     # otherwise, it won't make correct prediction!
     x = preprocess_input(x, mode='tf')
+    #x = my_preprocess(x)
 
     preds = model.predict(x)
     return preds
@@ -90,7 +105,8 @@ def predict():
 
 if __name__ == '__main__':
     # app.run(port=5002, threaded=False)
+    app.run(debug=True)
 
     # Serve the app with gevent
-    http_server = WSGIServer(('0.0.0.0', 5000), app)
-    http_server.serve_forever()
+    #http_server = WSGIServer(('0.0.0.0', 5000), app)
+    # http_server.serve_forever()
